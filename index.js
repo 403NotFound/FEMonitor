@@ -25,7 +25,12 @@ class FEMonitor {
 
   handleCaptureErrors() {
     // 捕获页面js错误
-    window.addEventListener('error', e => this.handleCaptureJSErrors(e))
+    window.addEventListener('error', e => this.handleCaptureJSErrors(e), false)
+    window.addEventListener(
+      'error',
+      e => this.handleCaptureSourceErrors(e),
+      true
+    )
     // 捕获 promise 错误
     window.addEventListener('unhandledrejection', e =>
       this.handleCapturePromiseErrors(e)
@@ -37,7 +42,7 @@ class FEMonitor {
     const commonMsg = getCommonMessage()
     const data = {
       ...commonMsg,
-      type: 'jserror',
+      type: 'jsError',
       data: {
         filename,
         lineno,
@@ -48,6 +53,30 @@ class FEMonitor {
     }
     this.report(data)
   }
+  // 资源加载错误
+  handleCaptureSourceErrors(e) {
+    // 过滤js的error
+    const target = e.target
+    const isElementTarget =
+      target instanceof HTMLScriptElement ||
+      target instanceof HTMLLinkElement ||
+      target instanceof HTMLImageElement
+    if (!isElementTarget) return false
+    // 上报资源地址
+
+    const url = target.src || target.href
+    console.log(target, url, 'static')
+    const commonMsg = getCommonMessage()
+    const data = {
+      ...commonMsg,
+      type: 'resourceError',
+      data: {
+        url,
+      },
+    }
+    this.report(data)
+  }
+
   handleCapturePromiseErrors(e) {
     console.log(e)
   }
@@ -61,7 +90,7 @@ class FEMonitor {
       const line = errorTrack[0].lineNumber
       const data = {
         ...commonMsg,
-        type: 'vueerror',
+        type: 'vueError',
         data: {
           col,
           line,

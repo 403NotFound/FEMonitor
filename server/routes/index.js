@@ -35,8 +35,9 @@ router.post('/report', async ctx => {
       status: 200,
       res: 'success',
     }
+    return
   }
-  if (body.type === 'vueerror') {
+  if (body.type === 'vueError') {
     const body = ctx.request.body
     const { file, col, line } = body.data
     const sourcemapFiles = fs
@@ -65,13 +66,13 @@ router.post('/report', async ctx => {
       // 检查文件夹是否存在如果不存在则新建文件夹
       if (!fs.existsSync(dir)) {
         fs.mkdirSync(dir)
-        fs.writeFileSync(filePath, JSON.stringify({ vueerror: [{ ...body }] }))
+        fs.writeFileSync(filePath, JSON.stringify({ vueError: [{ ...body }] }))
       } else {
         const _data = fs.readFileSync(filePath)
         const file = JSON.parse(_data.toString())
-        file['vueerror']
-          ? file['vueerror'].push(body)
-          : (file['vueerror'] = [{ ...body }])
+        file['vueError']
+          ? file['vueError'].push(body)
+          : (file['vueError'] = [{ ...body }])
         fs.writeFileSync(filePath, JSON.stringify(file))
       }
 
@@ -81,13 +82,45 @@ router.post('/report', async ctx => {
         file: fileContent,
         // sources: file.sources,
       }
-      // ctx.body = fileContent
+      return
     } else {
+      // 检查文件夹是否存在如果不存在则新建文件夹
+      if (!fs.existsSync(dir)) {
+        fs.mkdirSync(dir)
+        fs.writeFileSync(
+          filePath,
+          JSON.stringify({ [body.type]: [{ ...body }] })
+        )
+      } else {
+        const _data = fs.readFileSync(filePath)
+        const file = JSON.parse(_data.toString())
+        file[body.type]
+          ? file[body.type].push(body)
+          : (file[body.type] = [{ ...body }])
+        fs.writeFileSync(filePath, JSON.stringify(file))
+      }
       ctx.body = {
         status: 200,
         res: '玩呢？',
       }
+      return
     }
+  }
+  // 检查文件夹是否存在如果不存在则新建文件夹
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir)
+    fs.writeFileSync(filePath, JSON.stringify({ [body.type]: [{ ...body }] }))
+  } else {
+    const _data = fs.readFileSync(filePath)
+    const file = JSON.parse(_data.toString())
+    file[body.type]
+      ? file[body.type].push(body)
+      : (file[body.type] = [{ ...body }])
+    fs.writeFileSync(filePath, JSON.stringify(file))
+  }
+  ctx.body = {
+    status: 200,
+    res: '还没写，等等吧',
   }
 })
 

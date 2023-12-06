@@ -1,17 +1,59 @@
 {
-  "point": [
-    [967, 144],
-    [972, 153],
-    [983, 148],
-    [958, 151],
-    [983, 130],
-    [945, 149],
-    [973, 171],
-    [973, 171],
-    [968, 124],
-    [967, 124],
-    [936, 176],
-    [979, 142],
-    [928, 166]
+  "ui.click": [
+    {
+      "type": "ui.click",
+      "page": "/",
+      "token": "121324",
+      "time": 1701827994053,
+      "href": "http://localhost:8080/",
+      "screen": "1920x1080",
+      "isMobile": false,
+      "platform": "macOS",
+      "data": { "point": [596, 580], "x": 596, "y": 580 }
+    },
+    {
+      "type": "ui.click",
+      "page": "/",
+      "token": "121324",
+      "time": 1701827994367,
+      "href": "http://localhost:8080/",
+      "screen": "1920x1080",
+      "isMobile": false,
+      "platform": "macOS",
+      "data": { "point": [651, 516], "x": 651, "y": 516 }
+    },
+    {
+      "type": "ui.click",
+      "page": "/",
+      "token": "121324",
+      "time": 1701827994668,
+      "href": "http://localhost:8080/",
+      "screen": "1920x1080",
+      "isMobile": false,
+      "platform": "macOS",
+      "data": { "point": [1417, 564], "x": 1417, "y": 564 }
+    },
+    {
+      "type": "ui.click",
+      "page": "/",
+      "token": "121324",
+      "time": 1701827995067,
+      "href": "http://localhost:8080/",
+      "screen": "1920x1080",
+      "isMobile": false,
+      "platform": "macOS",
+      "data": { "point": [1353, 449], "x": 1353, "y": 449 }
+    },
+    {
+      "type": "ui.click",
+      "page": "/",
+      "token": "121324",
+      "time": 1701827995301,
+      "href": "http://localhost:8080/",
+      "screen": "1920x1080",
+      "isMobile": false,
+      "platform": "macOS",
+      "data": { "point": [1390, 542], "x": 1390, "y": 542 }
+    }
   ]
 }

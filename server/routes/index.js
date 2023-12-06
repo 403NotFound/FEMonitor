@@ -5,6 +5,7 @@ const sourceMap = require('source-map')
 const router = new Router()
 const dir = path.resolve(__dirname, '..', 'data')
 const filePath = path.join(dir, 'point.json')
+const recordPath = path.join(dir, 'record.json')
 const sourcemapDir = path.resolve(__dirname, '..', 'sourcemap') // 新增sourcemap文件夹路径
 
 router.get('/', ctx => {
@@ -38,7 +39,6 @@ router.post('/report', async ctx => {
     return
   }
   if (body.type === 'vueError') {
-    const body = ctx.request.body
     const { file, col, line } = body.data
     const sourcemapFiles = fs
       .readdirSync(sourcemapDir)
@@ -106,6 +106,17 @@ router.post('/report', async ctx => {
       return
     }
   }
+  if (body.type === 'record') {
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir)
+      fs.writeFileSync(
+        recordPath,
+        JSON.stringify({ [body.type]: [{ ...body }] })
+      )
+    } else {
+      fs.writeFileSync(recordPath, JSON.stringify(body))
+    }
+  }
   // 检查文件夹是否存在如果不存在则新建文件夹
   if (!fs.existsSync(dir)) {
     fs.mkdirSync(dir)
@@ -144,6 +155,23 @@ router.post('/upload', async ctx => {
   ctx.body = {
     status: 200,
     message: 'File uploaded successfully',
+  }
+})
+
+// 上传用户录屏数据
+router.post('/record', async ctx => {
+  const body = ctx.request.body
+  // 检查文件夹是否存在如果不存在则新建文件夹
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir)
+    fs.writeFileSync(recordPath, JSON.stringify({ [body.type]: [{ ...body }] }))
+  } else {
+    const _data = fs.readFileSync(recordPath)
+    const file = JSON.parse(_data.toString())
+    file[body.type]
+      ? file[body.type].push(body)
+      : (file[body.type] = [{ ...body }])
+    fs.writeFileSync(recordPath, JSON.stringify(file))
   }
 })
 

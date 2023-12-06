@@ -2,6 +2,7 @@ import { Config, setConfig } from './config'
 import ErrorStackParser from 'error-stack-parser'
 import { getCommonMessage } from './utils'
 import axios from 'axios'
+import * as rrweb from 'rrweb'
 // import heatmap from 'heatmap.js'
 import heatmap from './lib/heatmap'
 class FEMonitor {
@@ -10,9 +11,11 @@ class FEMonitor {
       console.warn('token miss')
       return
     }
+    this.events = []
     setConfig(options)
     this.handleCaptureErrors()
     this.handleCaptureBehaviorMessages()
+    this.handleRecordScreenSnapshort()
     fn && fn()
     // this.heatmap = heatmap()
   }
@@ -62,8 +65,6 @@ class FEMonitor {
       target instanceof HTMLLinkElement ||
       target instanceof HTMLImageElement
     if (!isElementTarget) return false
-    // 上报资源地址
-
     const url = target.src || target.href
     console.log(target, url, 'static')
     const commonMsg = getCommonMessage()
@@ -212,13 +213,29 @@ class FEMonitor {
 
     return heatmapInstance
   }
+  // 前端录屏
+  handleRecordScreenSnapshort() {
+    const _this = this
+    rrweb.record({
+      emit(event, isCheckout) {
+        _this.events.push(event)
+        isCheckout && (_this.events = [])
+      },
+      recordCanvas: true, // 记录 canvas 内容
+      checkoutEveryNms: 10 * 1000, // 每10s重新制作快照
+      checkoutEveryNth: 200, // 每 200 个 event 重新制作快照
+    })
+    setInterval(() => {
+      this.report({ type: 'record', data: _this.events })
+    }, 10000)
+  }
 
   report(data) {
     console.log(data)
     axios
       .post(Config.reportUrl, data)
       .then(response => {
-        console.log(response.data, '09090909')
+        console.log(response.data)
       })
       .catch(error => {
         console.error(error)

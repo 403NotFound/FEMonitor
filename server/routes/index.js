@@ -11,8 +11,13 @@ router.get('/', ctx => {
   ctx.body = 'hello Koa'
 })
 
+function fixPath(filepath) {
+  return filepath.replace(/\.[\.\/]+/g, '')
+}
+
 router.post('/report', async ctx => {
   const body = ctx.request.body
+  console.log(body.type)
   if (body.type === 'ui.click') {
     // 检查文件夹是否存在如果不存在则新建文件夹
     if (!fs.existsSync(dir)) {
@@ -34,36 +39,49 @@ router.post('/report', async ctx => {
   if (body.type === 'vueerror') {
     const body = ctx.request.body
     const { file, col, line } = body.data
-    console.log(file, col, line, sourcemapDir)
     const sourcemapFiles = fs
       .readdirSync(sourcemapDir)
       .filter(_file => _file.includes(file))
 
     if (sourcemapFiles.length) {
+      const sourcesPathMap = {}
       const targetFilePath = path.join(sourcemapDir, '.', sourcemapFiles[0])
       const data = fs.readFileSync(targetFilePath).toString()
+      // sourcemap 文件对象
+      const dataObj = JSON.parse(data)
+      const sources = dataObj.sources
       const smc = await new sourceMap.SourceMapConsumer(data)
       const originalPosition = smc.originalPositionFor({
         // 获取 出错代码 在 哪一个源文件及其对应位置
         line: line,
         column: col,
       })
+      dataObj.sources.map(item => {
+        sourcesPathMap[fixPath(item)] = item
+      })
+      const originSource = sourcesPathMap[originalPosition.source]
+      //  文件内容
+      const fileContent = dataObj.sourcesContent[sources.indexOf(originSource)]
       // 检查文件夹是否存在如果不存在则新建文件夹
       if (!fs.existsSync(dir)) {
         fs.mkdirSync(dir)
         fs.writeFileSync(filePath, JSON.stringify({ vueerror: [{ ...body }] }))
       } else {
-        const data = fs.readFileSync(filePath)
-        const file = JSON.parse(data.toString())
+        const _data = fs.readFileSync(filePath)
+        const file = JSON.parse(_data.toString())
         file['vueerror']
           ? file['vueerror'].push(body)
           : (file['vueerror'] = [{ ...body }])
         fs.writeFileSync(filePath, JSON.stringify(file))
       }
+
       ctx.body = {
         status: 200,
         res: originalPosition,
+        file: fileContent,
+        // sources: file.sources,
       }
+      // ctx.body = fileContent
     } else {
       ctx.body = {
         status: 200,
@@ -85,7 +103,6 @@ router.post('/upload', async ctx => {
   if (!fs.existsSync(sourcemapDir)) {
     fs.mkdirSync(sourcemapDir)
   }
-  console.log(!fs.existsSync(sourcemapDir))
   const file = ctx.request.files.file // 获取上传的文件
   const reader = fs.createReadStream(file.filepath) // 创建可读流
   const filePath = path.join(sourcemapDir, file.originalFilename) // 拼接文件路径

@@ -12,10 +12,9 @@ class FEMonitor {
     }
     setConfig(options)
     this.handleCaptureErrors()
-    this.hadnleCaptureBehaviorMessages()
+    this.handleCaptureBehaviorMessages()
     fn && fn()
-    this.heatmap = heatmap()
-    // this.heatmapInstance = this.handleCreateHeatMap()
+    // this.heatmap = heatmap()
   }
   // for vue
   install(Vue, options) {
@@ -49,7 +48,9 @@ class FEMonitor {
     }
     this.report(data)
   }
-  handleCapturePromiseErrors(e) {}
+  handleCapturePromiseErrors(e) {
+    console.log(e)
+  }
 
   handleCaptureVueErrors(Vue) {
     Vue.config.errorHandler = (err, vm, info) => {
@@ -71,8 +72,41 @@ class FEMonitor {
     }
   }
 
-  hadnleCaptureBehaviorMessages() {
+  handleCaptureBehaviorMessages() {
     window.addEventListener('click', e => this.hadnleCaptureClickMessages(e))
+    this.handlePv()
+    this.handleUv()
+  }
+
+  handlePv() {
+    let commonMsg = getCommonMessage()
+    const data = {
+      ...commonMsg,
+      type: 'pv',
+    }
+    this.report(data)
+  }
+
+  // 在页面初始化时统计 UV
+  handleUv() {
+    if (!document.cookie.includes('uv')) {
+      let commonMsg = getCommonMessage()
+      const data = {
+        ...commonMsg,
+        type: 'uv',
+      }
+      this.report(data)
+
+      let now = new Date()
+      let tomorrow = new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        now.getDate() + 1
+      )
+      let expires = '; expires=' + tomorrow.toUTCString()
+
+      document.cookie = 'uv=1' + expires + '; path=/'
+    }
   }
 
   // 处理html node

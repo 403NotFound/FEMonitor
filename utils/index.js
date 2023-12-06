@@ -8,8 +8,8 @@ export const getCommonMessage = () => {
     time: new Date().getTime(),
     href: location.href,
     screen: screen.width + 'x' + screen.height,
-    isMobile: navigator.userAgentData.mobile,
-    platform: navigator.userAgentData.platform,
+    isMobile: navigator.userAgentData && navigator.userAgentData.mobile,
+    platform: navigator.userAgentData && navigator.userAgentData.platform,
   }
   return data
 }

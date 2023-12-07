@@ -222,12 +222,12 @@ class FEMonitor {
         isCheckout && (_this.events = [])
       },
       recordCanvas: true, // 记录 canvas 内容
-      checkoutEveryNms: 10 * 1000, // 每10s重新制作快照
+      checkoutEveryNms: 20 * 1000, // 每10s重新制作快照
       checkoutEveryNth: 200, // 每 200 个 event 重新制作快照
     })
-    setInterval(() => {
-      this.report({ type: 'record', data: _this.events })
-    }, 10000)
+    // setInterval(() => {
+    //   this.report({ type: 'record', data: _this.events })
+    // }, 20000)
   }
 
   report(data) {

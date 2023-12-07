@@ -175,4 +175,37 @@ router.post('/record', async ctx => {
   }
 })
 
+// 上传用户录屏数据
+router.get('/record', async ctx => {
+  const body = ctx.request.body
+  // 检查文件夹是否存在如果不存在则新建文件夹
+  const _data = fs.readFileSync(recordPath)
+  const file = JSON.parse(_data.toString())
+  ctx.body = {
+    status: 200,
+    file: file,
+  }
+})
+
+router.get('/point', async ctx => {
+  // 检查文件夹是否存在如果不存在则新建文件夹
+  const _data = fs.readFileSync(filePath)
+
+  console.log(_data)
+  const file = JSON.parse(_data.toString())
+  ctx.body = {
+    status: 200,
+    file: file,
+  }
+})
+
+router.post('/form', async ctx => {
+  // 检查文件夹是否存在如果不存在则新建文件夹
+  const body = ctx.request.body
+  console.log(body.attachment)
+  ctx.body = {
+    status: 200,
+    data: body.attachment,
+  }
+})
 module.exports = router

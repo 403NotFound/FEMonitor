@@ -23,6 +23,7 @@
 
 ### 调试
 ```bash
+
 # 安装外部依赖
 npm i
 # 安装调试项目依赖
@@ -34,6 +35,9 @@ npm run dev
 
 # 运行后端服务
 npm run server
+
+# 打包
+npm run build
 
 ```
 
@@ -95,4 +99,25 @@ FEMonitor.init({
     ├── public
     ├── src
     └── vue.config.js
+```
+
+
+
+### 在项目中调用测试
+
+```bash
+npm i
+
+npm run server
+
+```
+
+```js
+import FEMonitor from 'femonitor'
+
+FEMonitor.init({
+  reportUrl: 'http://localhost:3000/report',
+  token: '123'
+})
+
 ```

@@ -3,6 +3,8 @@ import ErrorStackParser from 'error-stack-parser'
 import { getCommonMessage } from './utils'
 import axios from 'axios'
 import * as rrweb from 'rrweb'
+
+// 前端监控 SDK
 class FEMonitor {
   constructor() {
     this.events = []
@@ -15,15 +17,21 @@ class FEMonitor {
       return
     }
     setConfig(options)
+    // 捕获页面错误
     this.handleCaptureErrors()
+    // 捕获ajax错误
     this.handleCaptureAjaxErrors()
+    // 捕获fetch错误
     this.handleCaptureFetchErrors()
+    // 捕获性能指标
     window.onload = () => {
       setTimeout(() => {
         this.handleCapturePerformance()
       }, 0)
     }
+    // 捕获用户行为
     this.handleCaptureBehaviorMessages()
+    // 捕获用户操作记录
     options.record && this.handleRecordScreenSnapshort()
     fn && fn()
   }
@@ -320,11 +328,6 @@ class FEMonitor {
       },
     }
     this.report(data)
-    // this.heatmapInstance.addData({
-    //   x: layerX,
-    //   y: layerY,
-    //   value: 1,
-    // })
   }
 
   handleCreateHeatMap() {

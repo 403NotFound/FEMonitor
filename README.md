@@ -63,7 +63,7 @@ FEMonitor.init({
 ```
 
 ### 目录结构
-
+```bash
 ├── README.md
 ├── base.drawio
 ├── config 配置文件
@@ -95,3 +95,4 @@ FEMonitor.init({
     ├── public
     ├── src
     └── vue.config.js
+```

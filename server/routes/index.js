@@ -16,123 +16,143 @@ function fixPath(filepath) {
   return filepath.replace(/\.[\.\/]+/g, '')
 }
 
-router.post('/report', async ctx => {
-  const body = ctx.request.body
-  console.log(body.type)
-  if (body.type === 'ui.click') {
-    // 检查文件夹是否存在如果不存在则新建文件夹
-    if (!fs.existsSync(dir)) {
-      fs.mkdirSync(dir)
-      fs.writeFileSync(filePath, JSON.stringify({ 'ui.click': [{ ...body }] }))
-    } else {
-      const data = fs.readFileSync(filePath)
-      const file = JSON.parse(data.toString())
-      file['ui.click']
-        ? file['ui.click'].push(body)
-        : (file['ui.click'] = [{ ...body }])
-      fs.writeFileSync(filePath, JSON.stringify(file))
-    }
+const handleReport = async (ctx, body) => {
+  const { type } = body
+  console.log(type)
+  if (type === 'ui.click') {
+    handleUIClick(body, type)
     ctx.body = {
       status: 200,
       res: 'success',
     }
     return
   }
-  if (body.type === 'vueError') {
-    const { file, col, line } = body.data
-    const sourcemapFiles = fs
-      .readdirSync(sourcemapDir)
-      .filter(_file => _file.includes(file))
-
-    if (sourcemapFiles.length) {
-      const sourcesPathMap = {}
-      const targetFilePath = path.join(sourcemapDir, '.', sourcemapFiles[0])
-      const data = fs.readFileSync(targetFilePath).toString()
-      // sourcemap 文件对象
-      const dataObj = JSON.parse(data)
-      const sources = dataObj.sources
-      const smc = await new sourceMap.SourceMapConsumer(data)
-      const originalPosition = smc.originalPositionFor({
-        // 获取 出错代码 在 哪一个源文件及其对应位置
-        line: line,
-        column: col,
-      })
-      dataObj.sources.map(item => {
-        sourcesPathMap[fixPath(item)] = item
-      })
-      const originSource = sourcesPathMap[originalPosition.source]
-      //  文件内容
-      const fileContent = dataObj.sourcesContent[sources.indexOf(originSource)]
-      // 检查文件夹是否存在如果不存在则新建文件夹
-      if (!fs.existsSync(dir)) {
-        fs.mkdirSync(dir)
-        fs.writeFileSync(filePath, JSON.stringify({ vueError: [{ ...body }] }))
-      } else {
-        const _data = fs.readFileSync(filePath)
-        const file = JSON.parse(_data.toString())
-        file['vueError']
-          ? file['vueError'].push(body)
-          : (file['vueError'] = [{ ...body }])
-        fs.writeFileSync(filePath, JSON.stringify(file))
-      }
-
-      ctx.body = {
-        status: 200,
-        res: originalPosition,
-        file: fileContent,
-        // sources: file.sources,
-      }
-      return
-    } else {
-      // 检查文件夹是否存在如果不存在则新建文件夹
-      if (!fs.existsSync(dir)) {
-        fs.mkdirSync(dir)
-        fs.writeFileSync(
-          filePath,
-          JSON.stringify({ [body.type]: [{ ...body }] })
-        )
-      } else {
-        const _data = fs.readFileSync(filePath)
-        const file = JSON.parse(_data.toString())
-        file[body.type]
-          ? file[body.type].push(body)
-          : (file[body.type] = [{ ...body }])
-        fs.writeFileSync(filePath, JSON.stringify(file))
-      }
-      ctx.body = {
-        status: 200,
-        res: '玩呢？',
-      }
-      return
+  if (type === 'vueError') {
+    handleVueError(body, type)
+    ctx.body = {
+      status: 200,
+      res: 'success',
     }
+    return
   }
-  if (body.type === 'record') {
-    if (!fs.existsSync(dir)) {
-      fs.mkdirSync(dir)
-      fs.writeFileSync(
-        recordPath,
-        JSON.stringify({ [body.type]: [{ ...body }] })
-      )
-    } else {
-      fs.writeFileSync(recordPath, JSON.stringify(body))
+  if (type === 'record') {
+    handleRecord(body, type)
+    ctx.body = {
+      status: 200,
+      res: 'success',
     }
+    return
   }
-  // 检查文件夹是否存在如果不存在则新建文件夹
-  if (!fs.existsSync(dir)) {
-    fs.mkdirSync(dir)
-    fs.writeFileSync(filePath, JSON.stringify({ [body.type]: [{ ...body }] }))
-  } else {
-    const _data = fs.readFileSync(filePath)
-    const file = JSON.parse(_data.toString())
-    file[body.type]
-      ? file[body.type].push(body)
-      : (file[body.type] = [{ ...body }])
-    fs.writeFileSync(filePath, JSON.stringify(file))
-  }
+  handleDefault(body, type)
   ctx.body = {
     status: 200,
-    res: '还没写，等等吧',
+    res: 'success',
   }
+}
+
+const handleUIClick = (data, type) => {
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir)
+    fs.writeFileSync(filePath, JSON.stringify({ 'ui.click': [{ ...data }] }))
+  } else {
+    const file = readJSONFile(filePath)
+    file['ui.click']
+      ? file['ui.click'].push(data)
+      : (file['ui.click'] = [{ ...data }])
+    writeJSONFile(filePath, file)
+  }
+}
+
+const handleVueError = async (data, type) => {
+  const { file, col, line } = data
+  const sourcemapFiles = fs
+    .readdirSync(sourcemapDir)
+    .filter(_file => _file.includes(file))
+
+  if (sourcemapFiles.length) {
+    const sourcesPathMap = {}
+    const targetFilePath = path.join(sourcemapDir, '.', sourcemapFiles[0])
+    const sourcemapData = fs.readFileSync(targetFilePath).toString()
+    const sourcemapObj = JSON.parse(sourcemapData)
+    const sources = sourcemapObj.sources
+    const smc = await new sourceMap.SourceMapConsumer(sourcemapData)
+    const originalPosition = smc.originalPositionFor({
+      line: line,
+      column: col,
+    })
+    sourcemapObj.sources.map(item => {
+      sourcesPathMap[fixPath(item)] = item
+    })
+    const originSource = sourcesPathMap[originalPosition.source]
+    const fileContent =
+      sourcemapObj.sourcesContent[sources.indexOf(originSource)]
+
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir)
+      fs.writeFileSync(filePath, JSON.stringify({ vueError: [{ ...data }] }))
+    } else {
+      const file = readJSONFile(filePath)
+      file['vueError']
+        ? file['vueError'].push(data)
+        : (file['vueError'] = [{ ...data }])
+      writeJSONFile(filePath, file)
+    }
+
+    ctx.body = {
+      status: 200,
+      res: originalPosition,
+      file: fileContent,
+    }
+    return
+  } else {
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir)
+      fs.writeFileSync(filePath, JSON.stringify({ [type]: [{ ...data }] }))
+    } else {
+      const file = readJSONFile(filePath)
+      file[type] ? file[type].push(data) : (file[type] = [{ ...data }])
+      writeJSONFile(filePath, file)
+    }
+    ctx.body = {
+      status: 200,
+      res: '玩呢？',
+    }
+    return
+  }
+}
+
+const handleRecord = (data, type) => {
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir)
+    fs.writeFileSync(recordPath, JSON.stringify({ record: [{ ...data }] }))
+  } else {
+    writeJSONFile(recordPath, data)
+  }
+}
+
+const handleDefault = (data, type) => {
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir)
+    fs.writeFileSync(filePath, JSON.stringify({ [type]: [{ ...data }] }))
+  } else {
+    const file = readJSONFile(filePath)
+    file[type] ? file[type].push(data) : (file[type] = [{ ...data }])
+    writeJSONFile(filePath, file)
+  }
+}
+
+const readJSONFile = filePath => {
+  const data = fs.readFileSync(filePath)
+  return JSON.parse(data.toString())
+}
+
+const writeJSONFile = (filePath, data) => {
+  fs.writeFileSync(filePath, JSON.stringify(data))
+}
+
+router.post('/report', async ctx => {
+  const body = ctx.request.body
+  await handleReport(ctx, body)
 })
 
 // 新增upload接口
@@ -206,6 +226,14 @@ router.post('/form', async ctx => {
   ctx.body = {
     status: 200,
     data: body.attachment,
+  }
+})
+
+router.get('/data', async ctx => {
+  const data = readJSONFile(filePath)
+  ctx.body = {
+    status: 200,
+    data: data,
   }
 })
 module.exports = router

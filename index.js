@@ -3,21 +3,29 @@ import ErrorStackParser from 'error-stack-parser'
 import { getCommonMessage } from './utils'
 import axios from 'axios'
 import * as rrweb from 'rrweb'
-// import heatmap from 'heatmap.js'
-import heatmap from './lib/heatmap'
 class FEMonitor {
+  constructor() {
+    this.events = []
+    this.heatmapInstance = null
+  }
+
   init(options, fn) {
     if (options && !options.token) {
       console.warn('token miss')
       return
     }
-    this.events = []
     setConfig(options)
     this.handleCaptureErrors()
+    this.handleCaptureAjaxErrors()
+    this.handleCaptureFetchErrors()
+    window.onload = () => {
+      setTimeout(() => {
+        this.handleCapturePerformance()
+      }, 0)
+    }
     this.handleCaptureBehaviorMessages()
-    this.handleRecordScreenSnapshort()
+    options.record && this.handleRecordScreenSnapshort()
     fn && fn()
-    // this.heatmap = heatmap()
   }
   // for vue
   install(Vue, options) {
@@ -79,7 +87,16 @@ class FEMonitor {
   }
 
   handleCapturePromiseErrors(e) {
-    console.log(e)
+    const commonMsg = getCommonMessage()
+    const data = {
+      ...commonMsg,
+      type: 'promiseError',
+      data: {
+        message: (e && e.reason && e.reason.message) || '',
+        stack: (e && e.reason && e.reason.stack) || '',
+      },
+    }
+    this.report(data)
   }
 
   handleCaptureVueErrors(Vue) {
@@ -106,6 +123,109 @@ class FEMonitor {
     window.addEventListener('click', e => this.hadnleCaptureClickMessages(e))
     this.handlePv()
     this.handleUv()
+  }
+
+  // 捕获ajax错误
+  handleCaptureAjaxErrors() {
+    const commonMsg = getCommonMessage()
+    const self = this
+
+    const originalXHR = window.XMLHttpRequest
+    if (originalXHR) {
+      window.XMLHttpRequest = function () {
+        const xhr = new originalXHR()
+
+        xhr.addEventListener('error', function (event) {
+          const data = {
+            ...commonMsg,
+            type: 'ajaxError',
+            data: {
+              url: xhr.responseURL,
+              method: xhr.method,
+              params: xhr.params,
+              error: (event && event.error && event.error.message) || '',
+            },
+          }
+          self.report(data)
+        })
+
+        return xhr
+      }
+    }
+  }
+  // 捕获fetch错误
+  handleCaptureFetchErrors() {
+    const commonMsg = getCommonMessage()
+    const originalFetch = window.fetch
+    const self = this
+
+    if (originalFetch) {
+      window.fetch = function (url, options) {
+        return originalFetch.apply(this, arguments).catch(error => {
+          const data = {
+            ...commonMsg,
+            type: 'fetchError',
+            data: {
+              url,
+              method: options && options.method,
+              params: options && options.body,
+              error: error.message,
+            },
+          }
+          self.report(data)
+          throw error
+        })
+      }
+    }
+  }
+
+  // 捕获性能指标
+  handleCapturePerformance() {
+    const commonMsg = getCommonMessage()
+    const timing = window.performance.timing
+
+    const calculateTime = (start, end) => end - start
+
+    const whiteScreenTime = calculateTime(
+      timing.navigationStart,
+      timing.responseStart
+    )
+    const tcpTime = calculateTime(timing.connectStart, timing.connectEnd)
+    const requestTime = calculateTime(timing.requestStart, timing.responseEnd)
+    const dnsTime = calculateTime(
+      timing.domainLookupStart,
+      timing.domainLookupEnd
+    )
+
+    const parseDOMTime = calculateTime(
+      timing.navigationStart,
+      timing.domInteractive
+    )
+    const firstRenderTime = calculateTime(
+      timing.navigationStart,
+      timing.domContentLoadedEventEnd
+    )
+    const onloadTime = calculateTime(
+      timing.navigationStart,
+      timing.loadEventEnd
+    )
+    const readyTime = calculateTime(timing.navigationStart, timing.domComplete)
+
+    const data = {
+      ...commonMsg,
+      type: 'performance',
+      data: {
+        whiteScreenTime,
+        tcpTime,
+        requestTime,
+        dnsTime,
+        parseDOMTime,
+        firstRenderTime,
+        onloadTime,
+        readyTime,
+      },
+    }
+    this.report(data)
   }
 
   handlePv() {
@@ -225,9 +345,9 @@ class FEMonitor {
       checkoutEveryNms: 20 * 1000, // 每10s重新制作快照
       checkoutEveryNth: 200, // 每 200 个 event 重新制作快照
     })
-    // setInterval(() => {
-    //   this.report({ type: 'record', data: _this.events })
-    // }, 20000)
+    setInterval(() => {
+      this.report({ type: 'record', data: _this.events })
+    }, 20000)
   }
 
   report(data) {
@@ -238,7 +358,7 @@ class FEMonitor {
         console.log(response.data)
       })
       .catch(error => {
-        console.error(error)
+        console.log(error)
       })
   }
 }

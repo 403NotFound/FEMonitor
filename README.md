@@ -55,9 +55,10 @@ Vue.use(FEMonitor, {
 ```js
 import FEMonitor from 'femonitor'
 
-FEMonitor({
+FEMonitor.init({
   reportUrl: '',
   token: ''
 })
 
 ```
+

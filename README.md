@@ -77,10 +77,10 @@ FEMonitor.init({
 ├── package.json
 ├── server 后端代码
 │   ├── controllers
-│   ├── data
-│   ├── index.js
-│   ├── routes
-│   └── sourcemap
+│   ├── data 接口上报的数据存储目录
+│   ├── index.js 入口文件
+│   ├── routes 接口路由文件
+│   └── sourcemap 前端上传的sourcemap存储目录
 ├── utils 公共参数
 │   └── index.js
 └── vue-demo 前端demo项目

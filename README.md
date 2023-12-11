@@ -62,3 +62,36 @@ FEMonitor.init({
 
 ```
 
+### 目录结构
+
+├── README.md
+├── base.drawio
+├── config 配置文件
+│   └── index.js
+├── index.js sdk 入口文件
+├── interface
+├── lib 热力图库文件（无用）
+│   └── heatmap.js
+├── node_modules
+├── package-lock.json
+├── package.json
+├── server 后端代码
+│   ├── controllers
+│   ├── data
+│   ├── index.js
+│   ├── routes
+│   └── sourcemap
+├── utils 公共参数
+│   └── index.js
+└── vue-demo 前端demo项目
+    ├── README.md
+    ├── babel.config.js
+    ├── build
+    ├── dist
+    ├── jsconfig.json
+    ├── node_modules
+    ├── package-lock.json
+    ├── package.json
+    ├── public
+    ├── src
+    └── vue.config.js

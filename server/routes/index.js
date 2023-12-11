@@ -21,6 +21,7 @@ const handleReport = async (ctx, body) => {
   console.log(type)
   if (type === 'ui.click') {
     handleUIClick(body, type)
+    console.log(body.data.point)
     ctx.body = {
       status: 200,
       res: 'success',

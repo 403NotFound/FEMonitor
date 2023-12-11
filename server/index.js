@@ -21,6 +21,10 @@ app.use(
 app.use(
   koaBody({
     multipart: true,
+    formLimit: '10mb',
+    jsonLimit: '10mb',
+    textLimit: '10mb',
+    enableTypes: ['json', 'form', 'text'],
   })
 )
 

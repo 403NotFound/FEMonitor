@@ -304,16 +304,18 @@ class FEMonitor {
   }
 
   hadnleCaptureClickMessages(e) {
-    const { layerX, layerY } = e
+    const { pageX, pageY } = e
     const commonMsg = getCommonMessage()
 
     const data = {
       ...commonMsg,
       type: 'ui.click',
       data: {
-        point: [layerX, layerY],
-        x: layerX,
-        y: layerY,
+        point: [pageX / window.innerWidth, pageY / window.innerHeight],
+        x: pageX / window.innerWidth,
+        y: pageY / window.innerHeight,
+        scrollX: window.scrollX,
+        scrollY: window.scrollY,
         // dom: this.getElmPath(e.target),
       },
     }
@@ -342,12 +344,12 @@ class FEMonitor {
         isCheckout && (_this.events = [])
       },
       recordCanvas: true, // 记录 canvas 内容
-      checkoutEveryNms: 20 * 1000, // 每10s重新制作快照
+      checkoutEveryNms: 60 * 1000, // 每10s重新制作快照
       checkoutEveryNth: 200, // 每 200 个 event 重新制作快照
     })
     setInterval(() => {
       this.report({ type: 'record', data: _this.events })
-    }, 20000)
+    }, 60000)
   }
 
   report(data) {
